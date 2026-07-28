@@ -1,0 +1,50 @@
+name: Dockerize
+
+on:
+  workflow_run:
+    workflows: ['build']
+    types:
+      - completed
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build Docker Image
+        run: |
+          docker build -t hantsy/nestjs-prisma-sample:${{ github.sha }} -t hantsy/nestjs-prisma-sample:latest .
+
+      - name: Login to DockerHub Registry
+        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Push Docker Image
+        run: |
+          docker push hantsy/nestjs-prisma-sample:${{ github.sha }}
+          docker push hantsy/nestjs-prisma-sample:latest
+
+      - name: Create k8s kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: nestjs-prisma-sample
+
+      - name: Load image into kind
+        run: kind load docker-image hantsy/nestjs-prisma-sample:${{ github.sha }} --name nestjs-prisma-sample
+
+      - name: Apply k8s manifests
+        run: kubectl apply -k k8s/base/
+
+      - name: Wait for PostgreSQL
+        run: kubectl wait --for=condition=available --timeout=120s deployment/postgres
+
+      - name: Wait for app
+        run: kubectl wait --for=condition=available --timeout=120s deployment/nestjs-prisma-sample
+
+      - name: Smoke test
+        run: |
+          kubectl port-forward svc/nginx 8080:80 &
+          sleep 3
+          curl -s http://localhost:8080/api/v1/posts && echo "SMOKE OK"
