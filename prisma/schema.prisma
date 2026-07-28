@@ -1,24 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id      String   @id @default(uuid())
-  email   String   @unique
-  name    String?
-  role    Role     @default(USER)
-  posts   Post[]
-  profile Profile?
-
-  @@map(name: "users")
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -26,35 +12,44 @@ enum Role {
   ADMIN
 }
 
-model Profile {
-  id     String @id @default(uuid())
-  bio    String
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @unique @map("user_id")
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  firstName String?   @map("first_name")
+  lastName  String?   @map("last_name")
+  roles     Role[]    @default([USER])
+  posts     Post[]
+  comments  Comment[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  @@map(name: "profiles")
+  @@map("users")
 }
 
 model Post {
   id        String    @id @default(uuid())
   title     String
   content   String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime? @updatedAt @map("updated_at")
   author    User?     @relation(fields: [authorId], references: [id])
   authorId  String?   @map("author_id")
-  // Other fields
-  comments  Comment[] // A list of comments
-  //keywords  String[] // A scalar list
+  comments  Comment[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  @@map(name: "posts")
+  @@map("posts")
 }
 
 model Comment {
-  id      String @id @default(uuid())
-  content String
-  post    Post   @relation(fields: [postId], references: [id])
-  postId  String @map("post_id")
+  id        String   @id @default(uuid())
+  content   String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   @map("post_id")
+  author    User?    @relation(fields: [authorId], references: [id])
+  authorId  String?  @map("author_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map(name: "comments")
+  @@map("comments")
 }

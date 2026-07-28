@@ -1,40 +1,27 @@
 import { Module } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
-import { join } from 'path';
-import { DatabaseModule } from './database/database.module';
-import { PostsModule } from './posts/posts.module';
-import { UsersModule } from './users/users.module';
+import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { PostModule } from './post/post.module';
+import { UserModule } from './user/user.module';
+import { validationSchema } from './config/validation';
 
 @Module({
   imports: [
-    GraphQLModule.forRootAsync({
-      useFactory: () => ({
-        context: ({ req, res }) => ({ req, res }),
-        typePaths: ['./src/*/*.gql'],
-        installSubscriptionHandlers: true,
-        resolverValidationOptions: {
-          requireResolversForResolveType: 'warn',
-        },
-        buildSchemaOptions: {
-          dateScalarMode: 'isoDate',
-        },
-        definitions: {
-          // will generate .ts types from gql schema files
-          path: join(process.cwd(), 'src/graphql.schema.generated.ts'),
-          outputAs: 'interface',
-        },
-        debug: true,
-        introspection: true,
-        playground: true,
-        cors: false,
-        
-      }),
+    ConfigModule.forRoot({
+      validationSchema,
+      validationOptions: { allowUnknown: true, abortEarly: false },
     }),
-    DatabaseModule,
-    PostsModule,
-    UsersModule,
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
+    PrismaModule,
+    PostModule,
+    UserModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  exports: [AppService],
 })
 export class AppModule {}
