@@ -71,7 +71,7 @@ jobs:
         run: npx prisma db seed
 
       - name: Running e2e testing
-        run: node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand --forceExit --testTimeout 30000
+        run: npm run test:e2e -- --runInBand --forceExit --testTimeout 30000
 
       - name: Print PostgreSQL logs on failure
         if: failure()
