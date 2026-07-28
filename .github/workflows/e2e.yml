@@ -41,10 +41,25 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Running PostgreSQL service
+      - name: Start PostgreSQL
         run: |
           docker compose up -d postgres
           docker ps -a
+
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+              echo "PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30: PostgreSQL not ready yet, waiting..."
+            sleep 2
+          done
+          echo "PostgreSQL failed to start in time"
+          docker compose logs postgres
+          exit 1
 
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
@@ -54,3 +69,7 @@ jobs:
 
       - name: Running e2e testing
         run: npm run test:e2e -- --runInBand --forceExit --testTimeout 30000
+
+      - name: Print PostgreSQL logs on failure
+        if: failure()
+        run: docker compose logs postgres
