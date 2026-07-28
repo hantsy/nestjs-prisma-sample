@@ -3,6 +3,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
     "removeComments": true,
