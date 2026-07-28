@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { Role } from '../../prisma/generated/prisma/client.js';
 
 @Injectable()
 export class UserDataInitializerService implements OnModuleInit {

@@ -1,12 +1,17 @@
-import { PrismaClient, Role } from '@prisma/client';
+import 'dotenv/config'
+import { PrismaClient, Role } from '../prisma/generated/prisma/client.js'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+})
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   // Clean existing data
-  await prisma.comment.deleteMany();
-  await prisma.post.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.comment.deleteMany()
+  await prisma.post.deleteMany()
+  await prisma.user.deleteMany()
 
   // Create admin user
   const admin = await prisma.user.create({
@@ -18,7 +23,7 @@ async function main() {
       lastName: 'User',
       roles: [Role.ADMIN],
     },
-  });
+  })
 
   // Create regular user
   const user = await prisma.user.create({
@@ -30,7 +35,7 @@ async function main() {
       lastName: 'Bai',
       roles: [Role.USER],
     },
-  });
+  })
 
   // Create sample posts
   const posts = [
@@ -49,7 +54,7 @@ async function main() {
       content:
         'Use Prisma ORM to interact with PostgreSQL in a type-safe manner.',
     },
-  ];
+  ]
 
   for (const postData of posts) {
     const post = await prisma.post.create({
@@ -63,19 +68,19 @@ async function main() {
           },
         },
       },
-    });
-    console.log(`Created post: ${post.title}`);
+    })
+    console.log(`Created post: ${post.title}`)
   }
 
-  console.log({ admin, user });
-  console.log('Seed data created successfully!');
+  console.log({ admin, user })
+  console.log('Seed data created successfully!')
 }
 
 main()
   .catch((e) => {
-    console.error(e);
-    process.exit(1);
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

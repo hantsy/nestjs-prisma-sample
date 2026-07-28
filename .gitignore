@@ -74,6 +74,17 @@ typings/
 # TypeScript cache
 *.tsbuildinfo
 
+# Generated Prisma client
+prisma/generated/
+
+# Build outputs outside dist
+prisma.config.js
+prisma.config.js.map
+prisma.config.d.ts
+prisma/seed.js
+prisma/seed.js.map
+prisma/seed.d.ts
+
 # Optional npm cache directory
 .npm
 
